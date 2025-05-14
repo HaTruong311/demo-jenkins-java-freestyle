@@ -1,26 +1,11 @@
-# Build stage
-FROM eclipse-temurin:17-jdk-jammy as build
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-# Copy maven wrapper and pom.xml
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-
-# Download dependencies
-RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -DskipTests
-
-# Copy source code
-COPY src ./src
-
-# Build the application
-RUN ./mvnw package -DskipTests
-
-# Runtime stage
-FROM eclipse-temurin:17-jre-jammy
-WORKDIR /app
-
-# Copy the built jar from the build stage
-COPY --from=build /app/target/*.jar app.jar
-
+# 4. Argument for the JAR file:
+# This argument will be used to specify the path to the JAR file.
+# The Jenkins pipeline will pass the actual value for this argument during the 'docker build' command.
+# The default value 'target/*.jar' is a common pattern for Maven-built Spring Boot JARs.
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
